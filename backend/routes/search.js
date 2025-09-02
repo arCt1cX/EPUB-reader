@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const https = require('https');
 const cheerio = require('cheerio');
 const { searchLimiter } = require('../utils/rateLimiter');
 const router = express.Router();
@@ -34,17 +35,31 @@ router.get('/', async (req, res) => {
     
     console.log(`Search URL: ${searchUrl}`);
 
-    // Make request to Ocean of PDF
+    // Make request to Ocean of PDF with better error handling
     const response = await axios.get(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+        'Sec-Ch-Ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1'
       },
-      timeout: 10000 // 10 second timeout
+      timeout: 15000, // 15 second timeout
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false // Handle SSL issues
+      }),
+      validateStatus: function (status) {
+        return status < 500; // Accept anything less than 500 as success
+      }
     });
 
     // Parse the HTML
@@ -132,17 +147,82 @@ router.get('/', async (req, res) => {
 
     console.log(`Found ${books.length} books for query: ${q}`);
 
+    // If no books found from Ocean of PDF, try Project Gutenberg as fallback
+    if (books.length === 0) {
+      console.log('No results from Ocean of PDF, trying Project Gutenberg...');
+      
+      try {
+        const gutenbergUrl = `https://www.gutenberg.org/ebooks/search/?query=${encodeURIComponent(q)}&submit_search=Go%21`;
+        const gutenbergResponse = await axios.get(gutenbergUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          },
+          timeout: 10000
+        });
+
+        const $gutenberg = cheerio.load(gutenbergResponse.data);
+        
+        $('.booklink').each((index, element) => {
+          if (books.length >= 5) return false; // Limit Gutenberg results to 5
+          
+          try {
+            const $element = $gutenberg(element);
+            const title = $element.find('.title').text().trim();
+            const author = $element.find('.subtitle').text().trim() || 'Unknown Author';
+            const bookId = $element.attr('href')?.match(/\/ebooks\/(\d+)/)?.[1];
+            
+            if (title && bookId) {
+              books.push({
+                id: books.length + 1,
+                title: title,
+                author: author,
+                description: 'Free ebook from Project Gutenberg',
+                downloadUrl: `https://www.gutenberg.org/ebooks/${bookId}`,
+                cover: null,
+                source: 'Project Gutenberg'
+              });
+            }
+          } catch (err) {
+            console.error('Error parsing Gutenberg result:', err);
+          }
+        });
+        
+        console.log(`Added ${books.length} books from Project Gutenberg`);
+      } catch (gutenbergError) {
+        console.error('Project Gutenberg fallback failed:', gutenbergError.message);
+      }
+    }
+
     // Return results
     res.json(books);
 
   } catch (error) {
-    console.error('Search error:', error);
+    console.error('Search error details:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      hostname: error.hostname,
+      syscall: error.syscall
+    });
     
     // Check if it's a timeout or network error
     if (error.code === 'ECONNABORTED') {
       return res.status(408).json({ 
         error: 'Search timeout',
-        message: 'The search request took too long. Please try again.'
+        message: 'The search request took too long. Please try again.',
+        debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
+    // SSL/TLS errors
+    if (error.code === 'CERT_HAS_EXPIRED' || error.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || 
+        error.code === 'SELF_SIGNED_CERT_IN_CHAIN' || error.code === 'ENOTFOUND') {
+      return res.status(502).json({ 
+        error: 'Connection failed',
+        message: 'Unable to connect to book sources. They may be temporarily unavailable.',
+        debug: process.env.NODE_ENV === 'development' ? `${error.code}: ${error.message}` : undefined
       });
     }
     
