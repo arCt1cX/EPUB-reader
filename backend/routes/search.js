@@ -3,6 +3,16 @@ const axios = require('axios');
 const https = require('https');
 const cheerio = require('cheerio');
 const { searchLimiter } = require('../utils/rateLimiter');
+
+// Configure global HTTPS agent to handle SSL issues (like accepting insecure certificates)
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; // This is like clicking "proceed anyway" in browser
+
+// Set global HTTPS agent for axios
+axios.defaults.httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+  checkServerIdentity: () => undefined
+});
+
 const router = express.Router();
 
 // Search endpoint
@@ -29,38 +39,74 @@ router.get('/', async (req, res) => {
 
     console.log(`Searching Ocean of PDF for: ${q} (IP: ${clientIp})`);
 
-    // Construct the Ocean of PDF search URL
-    const searchQuery = encodeURIComponent(q.trim());
-    const searchUrl = `https://oceanofpdf.com/?s=${searchQuery}`;
+    let response;
+    let searchUrl;
     
-    console.log(`Search URL: ${searchUrl}`);
+    // Try HTTPS first, then HTTP as fallback
+    const searchQuery = encodeURIComponent(q.trim());
+    
+    try {
+      // First attempt: HTTPS with SSL bypass
+      searchUrl = `https://oceanofpdf.com/?s=${searchQuery}`;
+      console.log(`Trying HTTPS: ${searchUrl}`);
+      
+      const httpsAgent = new https.Agent({
+        rejectUnauthorized: false, // Accept self-signed certificates
+        checkServerIdentity: () => undefined, // Skip hostname verification
+        secureProtocol: 'TLSv1_2_method' // Use older TLS if needed
+      });
 
-    // Make request to Ocean of PDF with better error handling
-    const response = await axios.get(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0',
-        'Sec-Ch-Ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1'
-      },
-      timeout: 15000, // 15 second timeout
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false // Handle SSL issues
-      }),
-      validateStatus: function (status) {
-        return status < 500; // Accept anything less than 500 as success
+      response = await axios.get(searchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
+          'Referer': 'https://oceanofpdf.com/',
+        },
+        timeout: 20000, // 20 second timeout
+        httpsAgent: httpsAgent,
+        maxRedirects: 5, // Follow redirects
+        validateStatus: function (status) {
+          return status < 500; // Accept anything less than 500 as success
+        }
+      });
+      
+      console.log(`HTTPS request successful, status: ${response.status}`);
+      
+    } catch (httpsError) {
+      console.log(`HTTPS failed: ${httpsError.message}, trying HTTP...`);
+      
+      // Second attempt: Try HTTP instead
+      try {
+        searchUrl = `http://oceanofpdf.com/?s=${searchQuery}`;
+        console.log(`Trying HTTP: ${searchUrl}`);
+        
+        response = await axios.get(searchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Referer': 'http://oceanofpdf.com/',
+          },
+          timeout: 20000,
+          maxRedirects: 5,
+          validateStatus: function (status) {
+            return status < 500;
+          }
+        });
+        
+        console.log(`HTTP request successful, status: ${response.status}`);
+        
+      } catch (httpError) {
+        console.log(`Both HTTPS and HTTP failed. HTTPS error: ${httpsError.message}, HTTP error: ${httpError.message}`);
+        throw httpsError; // Throw the original HTTPS error
       }
-    });
+    }
 
     // Parse the HTML
     const $ = cheerio.load(response.data);
