@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import BackendStatus from './BackendStatus';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,6 +44,7 @@ const Navbar = () => {
             >
               Settings
             </Link>
+            <BackendStatus />
           </div>
 
           {/* Mobile menu button */}

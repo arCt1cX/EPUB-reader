@@ -103,9 +103,53 @@ export const getDefaultSettings = () => ({
 // Search and download operations
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-url.com/api' // Replace with your actual backend URL
+    ? 'https://your-backend-url.com/api' // Replace with your actual Render backend URL
     : 'http://localhost:3001/api'
   );
+
+// Backend status checking
+export const checkBackendStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return {
+      status: 'connected',
+      data: data,
+      url: API_BASE_URL
+    };
+  } catch (error) {
+    console.warn('Backend connection failed:', error.message);
+    return {
+      status: 'disconnected',
+      error: error.message,
+      url: API_BASE_URL
+    };
+  }
+};
+
+// Get detailed backend status
+export const getBackendStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/status`);
+    if (!response.ok) {
+      throw new Error('Status endpoint unavailable');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Status check error:', error);
+    throw error;
+  }
+};
 
 export const searchBooks = async (query) => {
   try {
