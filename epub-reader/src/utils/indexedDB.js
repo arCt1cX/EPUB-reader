@@ -103,7 +103,7 @@ export const getDefaultSettings = () => ({
 // Search and download operations
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-url.com/api' // Replace with your actual Render backend URL
+    ? 'https://epub-reader-backend-sbbi.onrender.com/api' // Replace with your actual Render backend URL
     : 'http://localhost:3001/api'
   );
 
