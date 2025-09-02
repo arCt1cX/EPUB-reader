@@ -47,7 +47,42 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    service: 'EPUB Reader Backend'
+    service: 'EPUB Reader Backend',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT
+  });
+});
+
+// Status endpoint with more detailed information
+app.get('/api/status', (req, res) => {
+  const memoryUsage = process.memoryUsage();
+  res.json({
+    status: 'operational',
+    timestamp: new Date().toISOString(),
+    service: 'EPUB Reader Backend API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: {
+      seconds: Math.floor(process.uptime()),
+      human: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m ${Math.floor(process.uptime() % 60)}s`
+    },
+    memory: {
+      used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+      total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+      external: `${Math.round(memoryUsage.external / 1024 / 1024)}MB`
+    },
+    endpoints: [
+      'GET /api/health - Basic health check',
+      'GET /api/status - Detailed status information', 
+      'GET /api/search?q=query - Search for EPUB books',
+      'POST /api/download - Download EPUB book'
+    ],
+    cors: {
+      allowedOrigins: allowedOrigins,
+      note: 'CORS is configured for frontend origins'
+    }
   });
 });
 

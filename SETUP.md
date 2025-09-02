@@ -166,95 +166,162 @@ The GitHub Action will automatically:
 
 ## 🔧 Part 5: Deploy Backend to Render (Required for Production)
 
-### Step 1: Prepare Backend for Deployment
+### Step 1: Add Backend to Repository
 
-First, create a `start` script and add a web service configuration. Update your backend `package.json`:
+The backend is now included in your repository! Let's commit it and deploy to Render.
 
-```json
-{
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  }
-}
+```powershell
+# Add and commit the backend
+cd d:\GitHubDesktop\repository\EPUB-reader
+git add backend/
+git commit -m "Add backend for Render deployment with enhanced status endpoints"
+git push origin main
 ```
 
 ### Step 2: Create Render Web Service
 
-1. **Go to [Render.com](https://render.com)** and sign in
+1. **Go to [Render.com](https://render.com)** and sign in with GitHub
 2. **Click "New +"** → **"Web Service"**
-3. **Connect your repository** (you'll need to push the backend to a Git repo)
-
-### Step 3: Configure the Web Service
+3. **Connect your GitHub repository**: 
+   - Search for `EPUB-reader` 
+   - Click "Connect" next to your repository
+4. **Configure the service**:
 
 **Service Configuration:**
 - **Name**: `epub-reader-backend` (or your preferred name)
 - **Environment**: `Node`
-- **Region**: Choose closest to your users
+- **Region**: Choose closest to your users (e.g., Oregon if in US)
 - **Branch**: `main`
+- **Root Directory**: `backend` (IMPORTANT: Set this to point to the backend folder)
 - **Build Command**: `npm install`
 - **Start Command**: `npm start`
 
-**Environment Variables** (Add these in Render dashboard):
+### Step 3: Configure Environment Variables
+
+In the Render dashboard, scroll down to **Environment Variables** and add these:
+
 ```env
 NODE_ENV=production
-EPUB_PORT=10000
 FRONTEND_URL=https://arct1cx.github.io
 MAX_REQUESTS_PER_MINUTE=60
 DOWNLOAD_TIMEOUT_SECONDS=30
 ```
 
-> **Note**: Render automatically assigns port 10000, so use `process.env.PORT || 3001` in your server.js
+> **Important**: Don't set `EPUB_PORT` - Render automatically assigns the port via `process.env.PORT`
 
-### Step 4: Update Backend for Render Deployment
+### Step 4: Deploy and Test
 
-Update your `server.js` to use Render's port:
+1. **Click "Create Web Service"** - Render will start building your app
+2. **Wait for deployment** (usually 2-3 minutes)
+3. **Copy your service URL** (e.g., `https://epub-reader-backend-abc123.onrender.com`)
+4. **Test the backend**:
+   - Health Check: `https://your-render-url.onrender.com/api/health`
+   - Status Info: `https://your-render-url.onrender.com/api/status`
+   - Search Test: `https://your-render-url.onrender.com/api/search?q=test`
+
+### Step 5: Update Frontend Configuration
+
+Once your backend is deployed successfully:
+
+1. **Go to GitHub repository Settings**:
+   - Navigate to: `https://github.com/arCt1cX/EPUB-reader/settings/secrets/actions`
+   - Click **"New repository secret"**
+   - **Name**: `BACKEND_URL`
+   - **Value**: `https://your-render-service.onrender.com/api` (replace with your actual URL)
+   - Click **"Add secret"**
+
+2. **Update the frontend code** to use the environment variable:
+
+Edit `epub-reader/src/utils/indexedDB.js`:
 
 ```javascript
-const PORT = process.env.PORT || process.env.EPUB_PORT || 3001;
+// API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://your-render-service.onrender.com/api'  // Replace with your Render URL
+    : 'http://localhost:3001/api');
 ```
 
-### Step 5: Push Backend to Git Repository
-
-You have two options:
-
-**Option A: Create Separate Repository for Backend**
+3. **Trigger a new deployment**:
 ```powershell
-cd d:\Server-arct1cx\epub-reader-backend
-git init
-git add .
-git commit -m "Initial backend setup"
-# Create new repo on GitHub called "epub-reader-backend"
-git remote add origin https://github.com/arCt1cX/epub-reader-backend.git
-git push -u origin main
-```
-
-**Option B: Add Backend to Existing Repository (Recommended)**
-```powershell
-# Copy backend to your main repository
-cp -r d:\Server-arct1cx\epub-reader-backend d:\GitHubDesktop\repository\EPUB-reader\backend
-
 cd d:\GitHubDesktop\repository\EPUB-reader
-git add backend/
-git commit -m "Add backend for Render deployment"
+git add epub-reader/src/utils/indexedDB.js
+git commit -m "Connect frontend to Render backend"
 git push origin main
 ```
 
-### Step 6: Deploy to Render
+### Step 6: Verify Everything Works
 
-1. **In Render dashboard**, connect to your repository
-2. **Set root directory** to `backend/` (if using Option B)
-3. **Add environment variables** as listed above
-4. **Click "Create Web Service"**
-5. **Wait for deployment** (usually 2-3 minutes)
-6. **Copy your service URL** (e.g., `https://epub-reader-backend.onrender.com`)
+**Backend Tests** (replace with your Render URL):
+- ✅ Health: `https://your-app.onrender.com/api/health`
+- ✅ Status: `https://your-app.onrender.com/api/status` 
+- ✅ Search: `https://your-app.onrender.com/api/search?q=fantasy`
 
-### Step 7: Update Frontend Configuration
+**Frontend Tests**:
+- ✅ App loads: `https://arct1cx.github.io/EPUB-reader`
+- ✅ No CORS errors in browser console
+- ✅ Search functionality works
+- ✅ Backend connectivity confirmed
 
-Once your backend is deployed, update the GitHub repository secret:
+### 🚨 Troubleshooting Render Deployment
 
-1. **Go to repository Settings** → **Secrets and variables** → **Actions**
-2. **Add secret `BACKEND_URL`** with value: `https://your-render-service.onrender.com/api`
+**Common Issues:**
+
+1. **Build Fails - "npm install failed"**
+   ```
+   Solution: Check your package.json is valid
+   - Ensure dependencies are correctly listed
+   - Remove any local paths or invalid packages
+   ```
+
+2. **App Crashes - "Web service exited with code 1"**
+   ```
+   Solution: Check Render logs for errors
+   - Click on your service → Logs tab
+   - Look for error messages
+   - Common issue: Missing environment variables
+   ```
+
+3. **CORS Errors**
+   ```
+   Solution: Update FRONTEND_URL environment variable
+   - In Render dashboard → Environment tab
+   - Set: FRONTEND_URL=https://arct1cx.github.io
+   - Redeploy the service
+   ```
+
+4. **404 Errors**
+   ```
+   Solution: Verify root directory is set to 'backend'
+   - In Render dashboard → Settings tab
+   - Root Directory should be: backend
+   ```
+
+**Debug Commands:**
+```bash
+# Test your local backend before deploying
+cd backend
+npm install
+npm start
+
+# Test the endpoints locally
+curl http://localhost:3001/api/health
+curl http://localhost:3001/api/status
+```
+
+### 📱 Server Status Monitoring
+
+Your backend now includes enhanced status endpoints:
+
+- **`/api/health`** - Quick health check (for monitoring services)
+- **`/api/status`** - Detailed server information including:
+  - ✅ Operational status
+  - ⏱️ Uptime information
+  - 💾 Memory usage
+  - 🌐 CORS configuration
+  - 📡 Available endpoints
+
+You can bookmark the status page: `https://your-render-url.onrender.com/api/status`
 
 ### Alternative Deployment Options
 
