@@ -35,7 +35,7 @@ In Render dashboard, add these environment variables:
 | Key | Value |
 |-----|-------|
 | `NODE_ENV` | `production` |
-| `FRONTEND_URL` | `https://arct1cx.github.io` |
+| `FRONTEND_URL` | `https://arct1cx.github.io/EPUB-reader` |
 | `MAX_REQUESTS_PER_MINUTE` | `60` |
 | `DOWNLOAD_TIMEOUT_SECONDS` | `30` |
 

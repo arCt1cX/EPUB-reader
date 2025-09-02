@@ -35,7 +35,7 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 
 # For production, add your GitHub Pages URL:
-# FRONTEND_URL=https://arct1cx.github.io
+# FRONTEND_URL=https://arct1cx.github.io/EPUB-reader
 
 # Rate limiting
 MAX_REQUESTS_PER_MINUTE=60
@@ -128,13 +128,13 @@ Edit your backend `.env` file:
 
 ```env
 # For production, allow your GitHub Pages domain
-FRONTEND_URL=https://arct1cx.github.io
+FRONTEND_URL=https://arct1cx.github.io/EPUB-reader
 ```
 
 Or for multiple environments:
 ```env
 # Allow both local and production
-FRONTEND_URL=http://localhost:3000,https://arct1cx.github.io
+FRONTEND_URL=http://localhost:3000,https://arct1cx.github.io/EPUB-reader
 ```
 
 Then update your backend CORS configuration in `server.js`:
@@ -202,7 +202,7 @@ In the Render dashboard, scroll down to **Environment Variables** and add these:
 
 ```env
 NODE_ENV=production
-FRONTEND_URL=https://arct1cx.github.io
+FRONTEND_URL=https://arct1cx.github.io/EPUB-reader
 MAX_REQUESTS_PER_MINUTE=60
 DOWNLOAD_TIMEOUT_SECONDS=30
 ```
@@ -286,7 +286,7 @@ git push origin main
    ```
    Solution: Update FRONTEND_URL environment variable
    - In Render dashboard → Environment tab
-   - Set: FRONTEND_URL=https://arct1cx.github.io
+   - Set: FRONTEND_URL=https://arct1cx.github.io/EPUB-reader
    - Redeploy the service
    ```
 
