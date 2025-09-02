@@ -16,7 +16,12 @@ app.use(helmet());
 // Configure CORS to allow multiple origins
 const allowedOrigins = process.env.FRONTEND_URL ? 
   process.env.FRONTEND_URL.split(',').map(url => url.trim()) : 
-  ['http://localhost:3000'];
+  ['http://localhost:3000', 'https://arct1cx.github.io']; // Added fallback for GitHub Pages
+
+console.log('Environment Variables:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('Allowed CORS Origins:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
