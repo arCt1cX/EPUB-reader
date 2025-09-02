@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Add permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -22,7 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd epub-reader
-        npm install
+        npm install --legacy-peer-deps
 
     - name: Build for production
       run: |
@@ -31,13 +37,15 @@ jobs:
         export REACT_APP_API_BASE_URL=${{ secrets.BACKEND_URL || 'https://your-backend-url.com/api' }}
         export REACT_APP_ENVIRONMENT=production
         npm run build
+        # Check if build directory exists
+        ls -la build/
       env:
         CI: false # Treat warnings as warnings, not errors
 
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./epub-reader/build
-        cname: # Add your custom domain here if you have one
+        force_orphan: true
