@@ -3,8 +3,6 @@ name: Build and Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 # Add permissions for GitHub Pages deployment
 permissions:
@@ -13,39 +11,50 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './epub-reader/package-lock.json'
 
     - name: Install dependencies
       run: |
         cd epub-reader
-        npm install --legacy-peer-deps
+        npm ci --legacy-peer-deps
 
     - name: Build for production
       run: |
         cd epub-reader
-        # Set production environment variables
-        export REACT_APP_API_BASE_URL=${{ secrets.BACKEND_URL || 'https://your-backend-url.com/api' }}
-        export REACT_APP_ENVIRONMENT=production
         npm run build
-        # Check if build directory exists
-        ls -la build/
       env:
-        CI: false # Treat warnings as warnings, not errors
+        CI: false
+        REACT_APP_API_BASE_URL: ${{ secrets.BACKEND_URL || 'https://your-backend-url.com/api' }}
+        REACT_APP_ENVIRONMENT: production
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      if: github.ref == 'refs/heads/main'
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./epub-reader/build
+        path: './epub-reader/build'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
         force_orphan: true
