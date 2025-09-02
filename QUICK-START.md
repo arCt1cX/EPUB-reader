@@ -23,32 +23,48 @@ npm start  # Should open browser at http://localhost:3000
 - ✅ Try uploading an EPUB file in the frontend
 - ✅ Try searching for books (will show mock results)
 
-### 4️⃣ GitHub Pages Setup (3 minutes)
+### 4️⃣ Deploy Backend to Render (Production) 
+1. **Copy backend to repository:**
+   ```powershell
+   cp -r d:\Server-arct1cx\epub-reader-backend d:\GitHubDesktop\repository\EPUB-reader\backend
+   cd d:\GitHubDesktop\repository\EPUB-reader
+   git add backend/
+   git commit -m "Add backend for deployment"
+   git push origin main
+   ```
+
+2. **Create Render Web Service:**
+   - Go to [render.com](https://render.com)
+   - New + → Web Service → Connect GitHub repo
+   - Root Directory: `backend`
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+
+3. **Add Environment Variables in Render:**
+   ```env
+   NODE_ENV=production
+   FRONTEND_URL=https://arct1cx.github.io
+   ```
+
+4. **Add Backend URL to GitHub Secrets:**
+   - Repository Settings → Secrets → Actions
+   - Add `BACKEND_URL` = `https://your-render-service.onrender.com/api`
+
+### 5️⃣ GitHub Pages Setup (3 minutes)
 1. **Enable GitHub Pages:**
    - Go to: https://github.com/arCt1cX/EPUB-reader/settings/pages
    - Source: Select "GitHub Actions"
 
-2. **Configure Backend URL (Optional for now):**
-   - Repository Settings → Secrets and variables → Actions
-   - Add secret: `BACKEND_URL` = `https://your-backend-url.com/api`
-
-3. **Deploy:**
+2. **Deploy:**
    ```powershell
    git add .
    git commit -m "Initial EPUB reader setup"
    git push origin main
    ```
 
-### 5️⃣ Production Backend (When Ready)
-Choose one option:
-
-**Option A: Use existing server**
-- Upload `epub-reader-backend` folder to your server
-- Install dependencies and run
-
-**Option B: Cloud hosting**
-- Deploy to Heroku, Railway, or Vercel
-- Update `BACKEND_URL` secret in GitHub
+### 6️⃣ Final Testing
+- ✅ Local: http://localhost:3000 (with backend on 3001)
+- ✅ Production: https://arct1cx.github.io/EPUB-reader (with Render backend)
 
 ## 🔧 Configuration Files to Check
 

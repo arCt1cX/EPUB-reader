@@ -164,38 +164,117 @@ The GitHub Action will automatically:
 3. Deploy to GitHub Pages
 4. Your app will be available at: `https://arct1cx.github.io/EPUB-reader`
 
-## 🔧 Part 5: Backend Deployment Options
+## 🔧 Part 5: Deploy Backend to Render (Required for Production)
 
-### Option 1: Keep Backend Local (Development Only)
-- Backend runs only on your local machine
-- Frontend deployed to GitHub Pages will have limited functionality
-- Good for testing frontend features
+### Step 1: Prepare Backend for Deployment
 
-### Option 2: Deploy Backend to Cloud Service
-Popular options:
-- **Heroku**: Easy deployment with git
-- **Railway**: Simple Node.js hosting
-- **Vercel**: Serverless functions
-- **DigitalOcean**: VPS hosting
+First, create a `start` script and add a web service configuration. Update your backend `package.json`:
 
-### Option 3: Integrate with Your Existing Server
-If you have a live server running your other projects:
-
-1. **Upload the epub-reader-backend folder** to your server
-2. **Configure your main server** to proxy requests to the EPUB backend
-3. **Update nginx/apache configuration** if needed
-
-Example nginx configuration:
-```nginx
-location /api/epub/ {
-    proxy_pass http://localhost:3001/api/;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
+```json
+{
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  }
 }
 ```
+
+### Step 2: Create Render Web Service
+
+1. **Go to [Render.com](https://render.com)** and sign in
+2. **Click "New +"** → **"Web Service"**
+3. **Connect your repository** (you'll need to push the backend to a Git repo)
+
+### Step 3: Configure the Web Service
+
+**Service Configuration:**
+- **Name**: `epub-reader-backend` (or your preferred name)
+- **Environment**: `Node`
+- **Region**: Choose closest to your users
+- **Branch**: `main`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+
+**Environment Variables** (Add these in Render dashboard):
+```env
+NODE_ENV=production
+EPUB_PORT=10000
+FRONTEND_URL=https://arct1cx.github.io
+MAX_REQUESTS_PER_MINUTE=60
+DOWNLOAD_TIMEOUT_SECONDS=30
+```
+
+> **Note**: Render automatically assigns port 10000, so use `process.env.PORT || 3001` in your server.js
+
+### Step 4: Update Backend for Render Deployment
+
+Update your `server.js` to use Render's port:
+
+```javascript
+const PORT = process.env.PORT || process.env.EPUB_PORT || 3001;
+```
+
+### Step 5: Push Backend to Git Repository
+
+You have two options:
+
+**Option A: Create Separate Repository for Backend**
+```powershell
+cd d:\Server-arct1cx\epub-reader-backend
+git init
+git add .
+git commit -m "Initial backend setup"
+# Create new repo on GitHub called "epub-reader-backend"
+git remote add origin https://github.com/arCt1cX/epub-reader-backend.git
+git push -u origin main
+```
+
+**Option B: Add Backend to Existing Repository (Recommended)**
+```powershell
+# Copy backend to your main repository
+cp -r d:\Server-arct1cx\epub-reader-backend d:\GitHubDesktop\repository\EPUB-reader\backend
+
+cd d:\GitHubDesktop\repository\EPUB-reader
+git add backend/
+git commit -m "Add backend for Render deployment"
+git push origin main
+```
+
+### Step 6: Deploy to Render
+
+1. **In Render dashboard**, connect to your repository
+2. **Set root directory** to `backend/` (if using Option B)
+3. **Add environment variables** as listed above
+4. **Click "Create Web Service"**
+5. **Wait for deployment** (usually 2-3 minutes)
+6. **Copy your service URL** (e.g., `https://epub-reader-backend.onrender.com`)
+
+### Step 7: Update Frontend Configuration
+
+Once your backend is deployed, update the GitHub repository secret:
+
+1. **Go to repository Settings** → **Secrets and variables** → **Actions**
+2. **Add secret `BACKEND_URL`** with value: `https://your-render-service.onrender.com/api`
+
+### Alternative Deployment Options
+
+**Option 1: Railway**
+- Similar to Render, connect GitHub repo
+- Automatically detects Node.js
+- Set environment variables in dashboard
+
+**Option 2: Heroku**
+- Create new app
+- Connect GitHub repository
+- Add Config Vars (environment variables)
+- Deploy from GitHub
+
+**Option 3: Your Existing Server**
+If you have a VPS or dedicated server:
+1. Upload backend files via FTP/SSH
+2. Install dependencies: `npm install`
+3. Use PM2 or similar to run: `pm2 start server.js`
+4. Configure reverse proxy (nginx/apache)
 
 ## 📝 Part 6: Testing the Complete Setup
 
