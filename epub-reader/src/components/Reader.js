@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ePub } from 'epubjs';
+import ePub from 'epubjs';
 import { getBook, savePosition, getPosition } from '../utils/indexedDB';
 import { useSettings } from '../contexts/SettingsContext';
 import ReaderControls from './ReaderControls';
