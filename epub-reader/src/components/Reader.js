@@ -1,7 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ePub from 'epubjs';
-import { getBook, savePosition, getPosition } from '../utils/indexedDB';
+import      console.log('🎨 Creating rendition...');
+      // Create rendition with better error handling
+      let rendition;
+      try {
+        rendition = epubBook.renderTo(viewerRef.current, {
+          width: '100%',
+          height: '100%',
+          spread: 'none',
+          allowScriptedContent: true,
+          manager: 'default',
+          flow: 'paginated',
+          snap: true
+        });
+        console.log('✅ Rendition created successfully');
+      } catch (renderError) {
+        console.error('❌ Error creating rendition:', renderError);
+        setError('Failed to initialize book reader');
+        return;
+      }osition, getPosition } from '../utils/indexedDB';
 import { useSettings } from '../contexts/SettingsContext';
 import ReaderControls from './ReaderControls';
 
