@@ -21,7 +21,7 @@
   ],
   "start_url": "/EPUB-reader/",
   "display": "standalone",
-  "theme_color": "#8b5cf6",
+  "theme_color": "#000000",
   "background_color": "#000000",
   "categories": ["books", "education", "productivity"],
   "orientation": "any",

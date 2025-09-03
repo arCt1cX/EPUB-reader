@@ -243,9 +243,9 @@ const Reader = () => {
   }
 
   return (
-    <div className="relative h-screen flex flex-col safe-area-top safe-area-bottom">
+    <div className="fixed inset-0 flex flex-col safe-area-top safe-area-bottom bg-white dark:bg-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 lg:p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="flex items-center justify-between p-4 lg:p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm flex-shrink-0">
         <div className="flex items-center space-x-3 lg:space-x-4">
           <button
             onClick={() => navigate('/')}
@@ -284,7 +284,7 @@ const Reader = () => {
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1 bg-gray-200 dark:bg-gray-700">
+      <div className="h-1 bg-gray-200 dark:bg-gray-700 flex-shrink-0">
         <div 
           className="h-full bg-violet-500 transition-all duration-300"
           style={{ width: `${progress}%` }}
@@ -292,13 +292,15 @@ const Reader = () => {
       </div>
 
       {/* Reader Container */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         {/* EPUB Viewer */}
         <div 
           ref={viewerRef}
-          className="w-full h-full reading-area"
+          className="w-full h-full reading-area overflow-hidden"
           style={{
-            fontFamily: settings.dyslexicFont ? 'OpenDyslexic, sans-serif' : settings.fontFamily
+            fontFamily: settings.dyslexicFont ? 'OpenDyslexic, sans-serif' : settings.fontFamily,
+            overscrollBehavior: 'none',
+            WebkitOverflowScrolling: 'touch'
           }}
         ></div>
 

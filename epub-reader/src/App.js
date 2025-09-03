@@ -48,14 +48,16 @@ function App() {
   return (
     <SettingsProvider>
       <ThemeProvider>
-        <div className="min-h-screen transition-colors duration-300 safe-area-bottom">
+        <div className="h-screen overflow-hidden transition-colors duration-300 safe-area-bottom">
           <Navbar />
-          <main className="container mx-auto px-4 py-6 lg:py-8 lg:px-6">
-            <Routes>
-              <Route path="/" element={<Library />} />
-              <Route path="/reader/:bookId" element={<Reader />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
+          <main className="h-full overflow-y-auto overscroll-none" style={{ height: 'calc(100vh - 4rem)' }}>
+            <div className="container mx-auto px-4 py-6 lg:py-8 lg:px-6">
+              <Routes>
+                <Route path="/" element={<Library />} />
+                <Route path="/reader/:bookId" element={<Reader />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </div>
           </main>
         </div>
       </ThemeProvider>

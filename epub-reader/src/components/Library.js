@@ -84,7 +84,7 @@ const Library = () => {
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="space-y-6 lg:space-y-8 h-full overflow-y-auto overscroll-none">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
