@@ -12,83 +12,167 @@ const Reader = () => {
   const viewerRef = useRef(null);
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
+  const isMountedRef = useRef(true);
   
   const [book, setBook] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentLocation, setCurrentLocation] = useState(null);
   const [toc, setToc] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    loadBook();
+    isMountedRef.current = true;
+    
+    // Delay loading to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        loadBook();
+      }
+    }, 100);
     
     return () => {
+      isMountedRef.current = false;
+      clearTimeout(timer);
       // Cleanup
       if (renditionRef.current) {
         renditionRef.current.destroy();
       }
     };
-  }, [bookId]);
+  }, [bookId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Apply settings to rendition
     if (renditionRef.current) {
       applySettings();
     }
-  }, [settings]);
+  }, [settings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadBook = async () => {
     try {
+      if (!isMountedRef.current) return;
+      
       setIsLoading(true);
       const bookData = await getBook(bookId);
+      
+      if (!isMountedRef.current) return;
       
       if (!bookData) {
         setError('Book not found');
         return;
       }
       
+      console.log('Book data loaded:', { 
+        id: bookData.id, 
+        title: bookData.title, 
+        fileType: typeof bookData.file,
+        fileSize: bookData.file?.byteLength || 'unknown'
+      });
+      
       setBook(bookData);
       
-      // Create EPUB book instance
-      const epubBook = ePub(bookData.file);
+      // Create EPUB book instance - handle ArrayBuffer correctly
+      let epubBook;
+      try {
+        // Ensure the file data is properly formatted for epubjs
+        if (bookData.file instanceof ArrayBuffer) {
+          epubBook = ePub(bookData.file);
+        } else {
+          // If it's not an ArrayBuffer, try to convert it
+          const arrayBuffer = new Uint8Array(bookData.file).buffer;
+          epubBook = ePub(arrayBuffer);
+        }
+      } catch (fileError) {
+        console.error('Error creating EPUB instance:', fileError);
+        setError('Invalid EPUB file format');
+        return;
+      }
+      
       bookRef.current = epubBook;
       
       // Load book metadata
       await epubBook.ready;
       
+      if (!isMountedRef.current) return;
+      
       // Get table of contents
       const navigation = await epubBook.loaded.navigation;
       setToc(navigation.toc);
       
-      // Create rendition
-      const rendition = epubBook.renderTo(viewerRef.current, {
-        width: '100%',
-        height: '100%',
-        spread: 'none'
+      // Wait for DOM element to be available and ensure it has dimensions
+      let retries = 0;
+      const maxRetries = 5;
+      
+      while ((!viewerRef.current || !viewerRef.current.offsetHeight) && retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+      
+      if (!viewerRef.current) {
+        setError('Reader container not available');
+        return;
+      }
+      
+      console.log('Container dimensions:', {
+        width: viewerRef.current.offsetWidth,
+        height: viewerRef.current.offsetHeight
       });
+      
+      // Force reflow to ensure container dimensions are calculated
+      const height = viewerRef.current.offsetHeight;
+      console.log('Forced reflow, container height:', height);
+      
+      // Create rendition with better error handling
+      let rendition;
+      try {
+        rendition = epubBook.renderTo(viewerRef.current, {
+          width: '100%',
+          height: '100%',
+          spread: 'none',
+          allowScriptedContent: true,
+          manager: 'default'
+        });
+      } catch (renderError) {
+        console.error('Error creating rendition:', renderError);
+        setError('Failed to initialize book reader');
+        return;
+      }
+      
       renditionRef.current = rendition;
       
       // Load saved position or start from beginning
       const savedPosition = await getPosition(bookId);
+      let displayResult;
+      
+      if (!isMountedRef.current) return;
+      
       if (savedPosition) {
-        await rendition.display(savedPosition);
+        displayResult = rendition.display(savedPosition);
       } else {
-        await rendition.display();
+        displayResult = rendition.display();
       }
+      
+      // Wait for display to complete
+      await displayResult;
+      
+      if (!isMountedRef.current) return;
       
       // Apply current settings
       applySettings();
       
       // Set up event listeners
       rendition.on('relocated', (location) => {
-        setCurrentLocation(location.start.cfi);
-        const progressPercent = epubBook.locations.percentageFromCfi(location.start.cfi);
-        setProgress(progressPercent);
-        
-        // Save position
-        savePosition(bookId, location.start.cfi);
+        if (isMountedRef.current) {
+          const progressPercent = epubBook.locations.percentageFromCfi(location.start.cfi);
+          setProgress(progressPercent);
+          
+          // Save position
+          savePosition(bookId, location.start.cfi);
+        }
+      });
+      
+      rendition.on('rendered', () => {
+        console.log('Book rendered successfully');
       });
       
       // Generate locations for progress tracking
@@ -96,9 +180,13 @@ const Reader = () => {
       
     } catch (err) {
       console.error('Error loading book:', err);
-      setError('Failed to load book');
+      if (isMountedRef.current) {
+        setError('Failed to load book: ' + err.message);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -300,7 +388,9 @@ const Reader = () => {
           style={{
             fontFamily: settings.dyslexicFont ? 'OpenDyslexic, sans-serif' : settings.fontFamily,
             overscrollBehavior: 'none',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'touch',
+            minHeight: '400px',
+            position: 'relative'
           }}
         ></div>
 

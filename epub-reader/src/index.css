@@ -91,6 +91,16 @@ html, body {
   /* Prevent overscrolling */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  /* Ensure proper layout for epubjs */
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.reading-area iframe {
+  border: none;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .reading-area.dyslexic {
