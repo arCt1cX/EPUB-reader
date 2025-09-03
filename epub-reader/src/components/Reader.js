@@ -32,20 +32,26 @@ const Reader = () => {
 
   useEffect(() => {
     isMountedRef.current = true;
+    console.log('🚀 Reader useEffect triggered with bookId:', bookId, 'containerReady:', containerReady);
     
     // Load book when both container is ready and we have a bookId
     if (containerReady && bookId) {
+      console.log('✅ Both container and bookId ready, starting timer...');
       const timer = setTimeout(() => {
         if (isMountedRef.current) {
+          console.log('⏰ Timer fired, calling loadBook');
           loadBook();
         }
       }, 100);
       
       return () => clearTimeout(timer);
+    } else {
+      console.log('⏸️ Waiting for containerReady:', containerReady, 'and bookId:', bookId);
     }
     
     return () => {
       isMountedRef.current = false;
+      console.log('🧹 Cleaning up Reader component');
       // Cleanup
       if (renditionRef.current) {
         renditionRef.current.destroy();
@@ -62,19 +68,29 @@ const Reader = () => {
 
   const loadBook = async () => {
     try {
-      if (!isMountedRef.current) return;
+      console.log('🔄 Starting loadBook for bookId:', bookId);
+      
+      if (!isMountedRef.current) {
+        console.log('❌ Component not mounted, aborting');
+        return;
+      }
       
       setIsLoading(true);
+      console.log('📚 Getting book from IndexedDB...');
       const bookData = await getBook(bookId);
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        console.log('❌ Component unmounted during getBook, aborting');
+        return;
+      }
       
       if (!bookData) {
+        console.log('❌ Book not found in IndexedDB');
         setError('Book not found');
         return;
       }
       
-      console.log('Book data loaded:', { 
+      console.log('✅ Book data loaded:', { 
         id: bookData.id, 
         title: bookData.title, 
         fileType: typeof bookData.file,
@@ -83,32 +99,43 @@ const Reader = () => {
       
       setBook(bookData);
       
+      console.log('📖 Creating EPUB instance...');
       // Create EPUB book instance - handle ArrayBuffer correctly
       let epubBook;
       try {
         // Ensure the file data is properly formatted for epubjs
         if (bookData.file instanceof ArrayBuffer) {
+          console.log('✅ File is ArrayBuffer, creating EPUB...');
           epubBook = ePub(bookData.file);
         } else {
+          console.log('⚠️ File is not ArrayBuffer, converting...');
           // If it's not an ArrayBuffer, try to convert it
           const arrayBuffer = new Uint8Array(bookData.file).buffer;
           epubBook = ePub(arrayBuffer);
         }
       } catch (fileError) {
-        console.error('Error creating EPUB instance:', fileError);
+        console.error('❌ Error creating EPUB instance:', fileError);
         setError('Invalid EPUB file format');
         return;
       }
       
+      console.log('✅ EPUB instance created successfully');
       bookRef.current = epubBook;
       
+      console.log('⏳ Waiting for EPUB ready...');
       // Load book metadata
       await epubBook.ready;
+      console.log('✅ EPUB ready completed');
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        console.log('❌ Component unmounted during ready, aborting');
+        return;
+      }
       
+      console.log('📑 Loading navigation...');
       // Get table of contents
       const navigation = await epubBook.loaded.navigation;
+      console.log('✅ Navigation loaded:', navigation);
       setToc(navigation.toc);
 
       // Container is guaranteed to be ready at this point
@@ -122,10 +149,13 @@ const Reader = () => {
         width: viewerRef.current.offsetWidth,
         height: viewerRef.current.offsetHeight,
         element: viewerRef.current
-      });      // Force reflow to ensure container dimensions are calculated
-      const height = viewerRef.current.offsetHeight;
-      console.log('Forced reflow, container height:', height);
+      });
       
+      // Force reflow to ensure container dimensions are calculated
+      const height = viewerRef.current.offsetHeight;
+      console.log('✅ Forced reflow, container height:', height);
+      
+      console.log('🎨 Creating rendition...');
       // Create rendition with better error handling
       let rendition;
       try {
@@ -136,6 +166,7 @@ const Reader = () => {
           allowScriptedContent: true,
           manager: 'default'
         });
+        console.log('✅ Rendition created successfully');
       } catch (renderError) {
         console.error('Error creating rendition:', renderError);
         setError('Failed to initialize book reader');
@@ -144,26 +175,38 @@ const Reader = () => {
       
       renditionRef.current = rendition;
       
+      console.log('📍 Loading saved position...');
       // Load saved position or start from beginning
       const savedPosition = await getPosition(bookId);
       let displayResult;
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        console.log('❌ Component unmounted during position loading, aborting');
+        return;
+      }
       
+      console.log('🎯 Displaying book...', savedPosition ? 'from saved position' : 'from beginning');
       if (savedPosition) {
         displayResult = rendition.display(savedPosition);
       } else {
         displayResult = rendition.display();
       }
       
+      console.log('⏳ Waiting for display to complete...');
       // Wait for display to complete
       await displayResult;
+      console.log('✅ Display completed');
       
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {
+        console.log('❌ Component unmounted after display, aborting');
+        return;
+      }
       
+      console.log('🎨 Applying settings...');
       // Apply current settings
       applySettings();
       
+      console.log('👂 Setting up event listeners...');
       // Set up event listeners
       rendition.on('relocated', (location) => {
         if (isMountedRef.current) {
@@ -176,19 +219,22 @@ const Reader = () => {
       });
       
       rendition.on('rendered', () => {
-        console.log('Book rendered successfully');
+        console.log('✅ Book rendered successfully');
       });
       
+      console.log('📊 Generating locations for progress tracking...');
       // Generate locations for progress tracking
       await epubBook.locations.generate(1024);
+      console.log('✅ Locations generated, book loading complete!');
       
     } catch (err) {
-      console.error('Error loading book:', err);
+      console.error('❌ Error loading book:', err);
       if (isMountedRef.current) {
         setError('Failed to load book: ' + err.message);
       }
     } finally {
       if (isMountedRef.current) {
+        console.log('🏁 Setting loading to false');
         setIsLoading(false);
       }
     }
