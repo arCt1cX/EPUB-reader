@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ePub from 'epubjs';
 import { getBook, savePosition, getPosition } from '../utils/indexedDB';
@@ -13,7 +13,6 @@ const Reader = () => {
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
   const isMountedRef = useRef(true);
-  const [containerReady, setContainerReady] = useState(false);
   
   const [book, setBook] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,31 +21,22 @@ const Reader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Callback ref to ensure the container is ready
-  const setViewerRef = useCallback((node) => {
-    if (node !== null) {
-      viewerRef.current = node;
-      setContainerReady(true);
-    }
-  }, []);
-
   useEffect(() => {
     isMountedRef.current = true;
-    console.log('🚀 Reader useEffect triggered with bookId:', bookId, 'containerReady:', containerReady);
+    console.log('🚀 Reader useEffect triggered with bookId:', bookId);
     
-    // Load book when both container is ready and we have a bookId
-    if (containerReady && bookId) {
-      console.log('✅ Both container and bookId ready, starting timer...');
+    if (bookId) {
+      console.log('✅ BookId present, starting load timer...');
       const timer = setTimeout(() => {
         if (isMountedRef.current) {
           console.log('⏰ Timer fired, calling loadBook');
           loadBook();
         }
-      }, 100);
+      }, 200); // Slightly longer delay to ensure DOM is ready
       
       return () => clearTimeout(timer);
     } else {
-      console.log('⏸️ Waiting for containerReady:', containerReady, 'and bookId:', bookId);
+      console.log('⏸️ No bookId provided');
     }
     
     return () => {
@@ -57,7 +47,7 @@ const Reader = () => {
         renditionRef.current.destroy();
       }
     };
-  }, [bookId, containerReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bookId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Apply settings to rendition
@@ -433,7 +423,7 @@ const Reader = () => {
       <div className="flex-1 relative overflow-hidden">
         {/* EPUB Viewer */}
         <div 
-          ref={setViewerRef}
+          ref={viewerRef}
           className="w-full h-full reading-area overflow-hidden"
           style={{
             fontFamily: settings.dyslexicFont ? 'OpenDyslexic, Arial, sans-serif' : settings.fontFamily,
