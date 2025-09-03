@@ -32,7 +32,7 @@ const Reader = () => {
           console.log('⏰ Timer fired, calling loadBook');
           loadBook();
         }
-      }, 200); // Slightly longer delay to ensure DOM is ready
+      }, 500); // Longer delay to ensure DOM is fully ready
       
       return () => clearTimeout(timer);
     } else {
@@ -128,14 +128,22 @@ const Reader = () => {
       console.log('✅ Navigation loaded:', navigation);
       setToc(navigation.toc);
 
-      // Container is guaranteed to be ready at this point
+      // Wait for container to be available
+      console.log('⏳ Checking for container...');
+      let retries = 0;
+      while (!viewerRef.current && retries < 10) {
+        console.log('⏳ Container not ready, waiting... retry', retries);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+      
       if (!viewerRef.current) {
-        console.error('Container still not available despite containerReady being true');
+        console.error('❌ Container not available after', retries, 'retries');
         setError('Reader container initialization failed');
         return;
       }
       
-      console.log('Container dimensions:', {
+      console.log('✅ Container found! Dimensions:', {
         width: viewerRef.current.offsetWidth,
         height: viewerRef.current.offsetHeight,
         element: viewerRef.current
@@ -336,17 +344,6 @@ const Reader = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-violet-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading book...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -372,6 +369,15 @@ const Reader = () => {
 
   return (
     <div className="fixed inset-0 flex flex-col safe-area-top safe-area-bottom bg-white dark:bg-gray-900">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-violet-500 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading book...</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between p-4 lg:p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm flex-shrink-0">
         <div className="flex items-center space-x-3 lg:space-x-4">
