@@ -17,6 +17,7 @@ export const ThemeProvider = ({ children }) => {
   const themes = [
     { id: 'light', name: 'Light', class: 'theme-light' },
     { id: 'dark', name: 'Dark', class: 'theme-dark' },
+    { id: 'ultra-dark', name: 'Ultra Dark', class: 'theme-ultra-dark' },
     { id: 'sepia', name: 'Sepia', class: 'theme-sepia' },
     { id: 'custom', name: 'Custom', class: 'theme-custom' }
   ];

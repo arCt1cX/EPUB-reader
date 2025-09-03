@@ -134,6 +134,21 @@ const Reader = () => {
         });
         rendition.themes.select('dark');
         break;
+      case 'ultra-dark':
+        rendition.themes.register('ultra-dark', {
+          'body': {
+            'background-color': '#000000 !important',
+            'color': '#ffffff !important'
+          },
+          'p': {
+            'color': '#ffffff !important'
+          },
+          '*': {
+            'background-color': '#000000 !important'
+          }
+        });
+        rendition.themes.select('ultra-dark');
+        break;
       case 'sepia':
         rendition.themes.register('sepia', {
           'body': {
@@ -197,7 +212,7 @@ const Reader = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-violet-500 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading book...</p>
         </div>
       </div>
@@ -218,7 +233,7 @@ const Reader = () => {
           </h2>
           <button
             onClick={() => navigate('/')}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            className="px-6 py-3 lg:px-4 lg:py-2 bg-violet-500 hover:bg-violet-600 active:bg-violet-700 text-white rounded-lg transition-colors font-medium min-h-[44px] lg:min-h-auto focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
           >
             Back to Library
           </button>
@@ -228,10 +243,10 @@ const Reader = () => {
   }
 
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen flex flex-col safe-area-top safe-area-bottom">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between p-4 lg:p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center space-x-3 lg:space-x-4">
           <button
             onClick={() => navigate('/')}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -271,7 +286,7 @@ const Reader = () => {
       {/* Progress Bar */}
       <div className="h-1 bg-gray-200 dark:bg-gray-700">
         <div 
-          className="h-full bg-blue-500 transition-all duration-300"
+          className="h-full bg-violet-500 transition-all duration-300"
           style={{ width: `${progress}%` }}
         ></div>
       </div>
@@ -290,18 +305,18 @@ const Reader = () => {
         {/* Navigation Arrows */}
         <button
           onClick={prevPage}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-black bg-opacity-20 hover:bg-opacity-40 text-white rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100"
+          className="absolute left-2 lg:left-4 top-1/2 transform -translate-y-1/2 p-3 lg:p-4 bg-violet-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-full transition-all opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-400 min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         
         <button
           onClick={nextPage}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-black bg-opacity-20 hover:bg-opacity-40 text-white rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100"
+          className="absolute right-2 lg:right-4 top-1/2 transform -translate-y-1/2 p-3 lg:p-4 bg-violet-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-full transition-all opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-400 min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>

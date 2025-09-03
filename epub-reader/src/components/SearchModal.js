@@ -49,16 +49,16 @@ const SearchModal = ({ isOpen, onClose, onBookDownloaded }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 safe-area-top safe-area-bottom">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[85vh] lg:max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-white">
             Search Online Books
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +67,7 @@ const SearchModal = ({ isOpen, onClose, onBookDownloaded }) => {
         </div>
 
         {/* Search Bar */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex gap-3">
             <input
               type="text"
@@ -75,13 +75,13 @@ const SearchModal = ({ isOpen, onClose, onBookDownloaded }) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="flex-1 px-4 py-3 lg:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base"
               disabled={isSearching}
             />
             <button
               onClick={handleSearch}
               disabled={isSearching || !query.trim()}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              className="px-6 py-3 lg:py-2 bg-violet-500 hover:bg-violet-600 active:bg-violet-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-medium min-h-[44px] lg:min-h-auto focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
             >
               {isSearching ? (
                 <div className="flex items-center">
@@ -142,7 +142,7 @@ const SearchModal = ({ isOpen, onClose, onBookDownloaded }) => {
                   <button
                     onClick={() => handleDownload(book)}
                     disabled={isDownloading}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-lg transition-colors flex-shrink-0"
+                    className="px-4 py-3 lg:px-4 lg:py-2 bg-violet-500 hover:bg-violet-600 active:bg-violet-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex-shrink-0 font-medium min-h-[44px] lg:min-h-auto focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                   >
                     {downloadingId === book.id ? (
                       <div className="flex items-center">

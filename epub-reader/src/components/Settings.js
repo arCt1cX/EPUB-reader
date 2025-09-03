@@ -30,40 +30,40 @@ const Settings = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6 lg:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Settings
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-base lg:text-lg text-gray-600 dark:text-gray-400">
           Customize your reading experience
         </p>
       </div>
 
       {/* Theme Settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6">
+        <h2 className="text-lg lg:text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Theme
         </h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {themes.map((theme) => (
             <button
               key={theme.id}
               onClick={() => handleSettingChange('theme', theme.id)}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              className={`p-4 rounded-lg border-2 transition-all min-h-[80px] lg:min-h-[100px] ${
                 localSettings.theme === theme.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-200 dark:ring-violet-800'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-violet-300 dark:hover:border-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-900/10'
               }`}
             >
-              <div className={`w-full h-16 rounded mb-2 ${theme.class}`}>
-                <div className="w-full h-full rounded flex items-center justify-center text-sm font-medium">
+              <div className={`w-full h-12 lg:h-16 rounded mb-2 ${theme.class} flex items-center justify-center`}>
+                <div className="text-xs lg:text-sm font-medium opacity-75">
                   {theme.name}
                 </div>
               </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                 {theme.name}
               </span>
             </button>
@@ -130,7 +130,7 @@ const Settings = () => {
             <select
               value={localSettings.fontFamily}
               onChange={(e) => handleSettingChange('fontFamily', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-3 lg:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent text-base lg:text-sm"
             >
               {fontFamilies.map((font) => (
                 <option key={font.value} value={font.value}>
@@ -219,13 +219,13 @@ const Settings = () => {
             </div>
             <button
               onClick={() => handleSettingChange('dyslexicFont', !localSettings.dyslexicFont)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                localSettings.dyslexicFont ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+              className={`relative inline-flex h-7 w-12 lg:h-6 lg:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                localSettings.dyslexicFont ? 'bg-violet-500' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  localSettings.dyslexicFont ? 'translate-x-6' : 'translate-x-1'
+                className={`inline-block h-5 w-5 lg:h-4 lg:w-4 transform rounded-full bg-white transition-transform ${
+                  localSettings.dyslexicFont ? 'translate-x-6 lg:translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
@@ -243,13 +243,13 @@ const Settings = () => {
             </div>
             <button
               onClick={() => handleSettingChange('highContrast', !localSettings.highContrast)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                localSettings.highContrast ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+              className={`relative inline-flex h-7 w-12 lg:h-6 lg:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                localSettings.highContrast ? 'bg-violet-500' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  localSettings.highContrast ? 'translate-x-6' : 'translate-x-1'
+                className={`inline-block h-5 w-5 lg:h-4 lg:w-4 transform rounded-full bg-white transition-transform ${
+                  localSettings.highContrast ? 'translate-x-6 lg:translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
@@ -267,7 +267,7 @@ const Settings = () => {
         </p>
         <button
           onClick={handleReset}
-          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+          className="px-6 py-3 lg:px-4 lg:py-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-lg transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px] lg:min-h-auto"
         >
           Reset to Defaults
         </button>

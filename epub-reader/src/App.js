@@ -39,8 +39,8 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-violet-500"></div>
       </div>
     );
   }
@@ -48,9 +48,9 @@ function App() {
   return (
     <SettingsProvider>
       <ThemeProvider>
-        <div className="min-h-screen transition-colors duration-300">
+        <div className="min-h-screen transition-colors duration-300 safe-area-bottom">
           <Navbar />
-          <main className="container mx-auto px-4 py-8">
+          <main className="container mx-auto px-4 py-6 lg:py-8 lg:px-6">
             <Routes>
               <Route path="/" element={<Library />} />
               <Route path="/reader/:bookId" element={<Reader />} />
