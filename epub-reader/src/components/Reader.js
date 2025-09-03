@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ePub from 'epubjs';
 import { getBook, savePosition, getPosition } from '../utils/indexedDB';
@@ -13,6 +13,7 @@ const Reader = () => {
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
   const isMountedRef = useRef(true);
+  const [containerReady, setContainerReady] = useState(false);
   
   const [book, setBook] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,25 +22,36 @@ const Reader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Callback ref to ensure the container is ready
+  const setViewerRef = useCallback((node) => {
+    if (node !== null) {
+      viewerRef.current = node;
+      setContainerReady(true);
+    }
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
     
-    // Delay loading to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (isMountedRef.current) {
-        loadBook();
-      }
-    }, 100);
+    // Load book when both container is ready and we have a bookId
+    if (containerReady && bookId) {
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          loadBook();
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
     
     return () => {
       isMountedRef.current = false;
-      clearTimeout(timer);
       // Cleanup
       if (renditionRef.current) {
         renditionRef.current.destroy();
       }
     };
-  }, [bookId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bookId, containerReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Apply settings to rendition
@@ -98,27 +110,19 @@ const Reader = () => {
       // Get table of contents
       const navigation = await epubBook.loaded.navigation;
       setToc(navigation.toc);
-      
-      // Wait for DOM element to be available and ensure it has dimensions
-      let retries = 0;
-      const maxRetries = 5;
-      
-      while ((!viewerRef.current || !viewerRef.current.offsetHeight) && retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        retries++;
-      }
-      
+
+      // Container is guaranteed to be ready at this point
       if (!viewerRef.current) {
-        setError('Reader container not available');
+        console.error('Container still not available despite containerReady being true');
+        setError('Reader container initialization failed');
         return;
       }
       
       console.log('Container dimensions:', {
         width: viewerRef.current.offsetWidth,
-        height: viewerRef.current.offsetHeight
-      });
-      
-      // Force reflow to ensure container dimensions are calculated
+        height: viewerRef.current.offsetHeight,
+        element: viewerRef.current
+      });      // Force reflow to ensure container dimensions are calculated
       const height = viewerRef.current.offsetHeight;
       console.log('Forced reflow, container height:', height);
       
@@ -199,11 +203,11 @@ const Reader = () => {
     rendition.themes.fontSize(`${settings.fontSize}px`);
     rendition.themes.register('custom', {
       'body': {
-        'font-family': settings.dyslexicFont ? 'OpenDyslexic, sans-serif !important' : `${settings.fontFamily}, serif !important`,
+        'font-family': settings.dyslexicFont ? 'OpenDyslexic, Arial, sans-serif !important' : `${settings.fontFamily}, serif !important`,
         'line-height': `${settings.lineHeight} !important`,
       },
       'p': {
-        'font-family': settings.dyslexicFont ? 'OpenDyslexic, sans-serif !important' : `${settings.fontFamily}, serif !important`,
+        'font-family': settings.dyslexicFont ? 'OpenDyslexic, Arial, sans-serif !important' : `${settings.fontFamily}, serif !important`,
         'line-height': `${settings.lineHeight} !important`,
       }
     });
@@ -383,10 +387,10 @@ const Reader = () => {
       <div className="flex-1 relative overflow-hidden">
         {/* EPUB Viewer */}
         <div 
-          ref={viewerRef}
+          ref={setViewerRef}
           className="w-full h-full reading-area overflow-hidden"
           style={{
-            fontFamily: settings.dyslexicFont ? 'OpenDyslexic, sans-serif' : settings.fontFamily,
+            fontFamily: settings.dyslexicFont ? 'OpenDyslexic, Arial, sans-serif' : settings.fontFamily,
             overscrollBehavior: 'none',
             WebkitOverflowScrolling: 'touch',
             minHeight: '400px',
